@@ -22,10 +22,6 @@ class Clickatell extends SmsGatewayPluginBase {
   public function defaultConfiguration() {
     $defaults = [];
     $defaults['account'] = [
-      // HTTP/S.
-      'username' => '',
-      'password' => '',
-      'api_id' => '',
       // REST.
       'auth_token' => '',
     ];
@@ -76,7 +72,7 @@ class Clickatell extends SmsGatewayPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function send(SmsMessageInterface $sms_message, array $options) {
+  public function send(SmsMessageInterface $sms_message) {
     $api = new ClickatellRest(
       $this->configuration['account']['auth_token']
     );
