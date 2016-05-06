@@ -6,6 +6,7 @@ use Drupal\sms\Plugin\SmsGatewayPluginBase;
 use Drupal\sms\Message\SmsMessageInterface;
 use Drupal\sms\Message\SmsMessageResult;
 use Clickatell\Api\ClickatellRest;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * @SmsGateway(
@@ -34,7 +35,7 @@ class Clickatell extends SmsGatewayPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function buildConfigurationForm(array $form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  public function buildConfigurationForm(array $form, FormStateInterface $form_state) {
     $form = parent::buildConfigurationForm($form, $form_state);
 
     $config = $this->getConfiguration();
@@ -64,7 +65,7 @@ class Clickatell extends SmsGatewayPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function submitConfigurationForm(array &$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+  public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $this->configuration['account']['auth_token'] = $form_state->getValue('auth_token');
     $this->configuration['settings']['insecure'] = (boolean)$form_state->getValue('insecure');
   }
