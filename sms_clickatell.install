@@ -3,7 +3,7 @@
 /**
  * Implements hook_requirements().
  */
-function clickatell_requirements($phase) {
+function sms_clickatell_requirements($phase) {
   $requirements = [];
 
   if (!class_exists('\Clickatell\Clickatell')) {

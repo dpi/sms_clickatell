@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\clickatell\Plugin\SmsGateway;
+namespace Drupal\sms_clickatell\Plugin\SmsGateway;
 
 use Drupal\sms\Plugin\SmsGatewayPluginBase;
 use Drupal\sms\Message\SmsMessageInterface;
