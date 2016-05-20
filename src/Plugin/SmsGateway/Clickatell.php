@@ -7,12 +7,14 @@ use Drupal\sms\Message\SmsMessageInterface;
 use Drupal\sms\Message\SmsMessageResult;
 use Clickatell\Api\ClickatellRest;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\sms\Entity\SmsMessageInterface as SmsMessageEntityInterface;
 
 /**
  * @SmsGateway(
  *   id = "clickatell",
  *   label = @Translation("Clickatell"),
  *   outgoing_message_max_recipients = 600,
+ *   schedule_aware = TRUE,
  * )
  */
 class Clickatell extends SmsGatewayPluginBase {
@@ -79,9 +81,18 @@ class Clickatell extends SmsGatewayPluginBase {
     );
     $api->secure(empty($this->configuration['settings']['insecure']));
 
+    $extra = [];
+    if ($sms_message instanceof SmsMessageEntityInterface) {
+      // See: https://www.clickatell.com/developers/api-docs/scheduled-delivery-advanced-message-send/
+      if ($time = $sms_message->getSendTime()) {
+        $extra['scheduledDeliveryTime'] = $time;
+      }
+    }
+
     $response = $api->sendMessage(
       $sms_message->getRecipients(),
-      $sms_message->getMessage()
+      $sms_message->getMessage(),
+      $extra
     );
 
     return new SmsMessageResult(['status' => TRUE]);
