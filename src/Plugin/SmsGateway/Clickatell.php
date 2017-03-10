@@ -35,9 +35,6 @@ class Clickatell extends SmsGatewayPluginBase {
       // REST.
       'auth_token' => '',
     ];
-    $defaults['settings'] = [
-      'insecure' => FALSE,
-    ];
     return $defaults;
   }
 
@@ -61,13 +58,6 @@ class Clickatell extends SmsGatewayPluginBase {
       '#default_value' => $config['account']['auth_token'],
     ];
 
-    $form['clickatell']['insecure'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Use insecure requests'),
-      '#description' => $this->t('Changes default behaviour from https to http.'),
-      '#default_value' => $config['settings']['insecure'],
-    ];
-
     return $form;
   }
 
@@ -76,7 +66,6 @@ class Clickatell extends SmsGatewayPluginBase {
    */
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $this->configuration['account']['auth_token'] = trim($form_state->getValue('auth_token'));
-    $this->configuration['settings']['insecure'] = (boolean)$form_state->getValue('insecure');
   }
 
   /**
