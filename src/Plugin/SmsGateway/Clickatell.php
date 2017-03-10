@@ -9,9 +9,10 @@ use Drupal\sms\Message\SmsMessageInterface;
 use Drupal\sms\Message\SmsMessageResult;
 use Drupal\sms\Message\SmsMessageReportStatus;
 use Drupal\sms\Message\SmsMessageResultStatus;
-use Clickatell\Api\ClickatellRest;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\sms\Entity\SmsMessageInterface as SmsMessageEntityInterface;
+use Clickatell\Rest as ClickatellRest;
+use Clickatell\ClickatellException;
 
 /**
  * @SmsGateway(
@@ -87,9 +88,8 @@ class Clickatell extends SmsGatewayPluginBase {
     $api = new ClickatellRest(
       $this->configuration['account']['auth_token']
     );
-    $api->secure(empty($this->configuration['settings']['insecure']));
 
-    $extra = [];
+    $message = [];
     if ($sms_message instanceof SmsMessageEntityInterface) {
       // See: https://www.clickatell.com/developers/api-docs/scheduled-delivery-advanced-message-send/
       if ($time = $sms_message->getSendTime()) {
@@ -107,8 +107,9 @@ class Clickatell extends SmsGatewayPluginBase {
     }
 
     $recipients = $sms_message->getRecipients();
-    $message = $sms_message->getMessage();
-    $response = $api->sendMessage($recipients, $message, $extra);
+    $message['to'] = $recipients;
+    $message['content'] = $sms_message->getMessage();
+    $response = $api->sendMessage($message);
 
     // Unfortunately the Clickatell library (arcturial/clickatell) does not have
     // very good error handling. An empty response will be given if the request
@@ -121,52 +122,36 @@ class Clickatell extends SmsGatewayPluginBase {
     }
 
     // Response documentation.
-    // https://www.clickatell.com/developers/api-docs/http-status-codes-rest/
-    // https://www.clickatell.com/developers/api-docs/send-message-rest/
+    // https://www.clickatell.com/developers/api-documentation/rest-api-send-message/
 
     $reports = [];
     foreach ($response as $message_result) {
-      // If there is `id` and `destination`, then the request was received.
       $report = new SmsDeliveryReport();
 
-      // Use empty here since non-error will be a FALSE. But the keys may also
-      // not be set.
-      $message_id = !empty($message_result->id)         ? $message_result->id : NULL;
-      $recipient = !empty($message_result->destination) ? $message_result->destination : NULL;
-//      $error_code = !empty($message_result->errorCode)  ? $message_result->errorCode : NULL;
-      $error_message = !empty($message_result->error)   ? $message_result->error : NULL;
+      /** @var string|null $message_id */
+      $message_id = $message_result['apiMessageId'];
+      /** @var boolean $accepted */
+      $accepted = $message_result['accepted'];
+      /** @var string $recipient */
+      $recipient = $message_result['to'];
+      /** @var string|null $error_message */
+      $error_message = $message_result['error'];
 
-      // @fixme: Error code is not working due to a failure with the Clickatell
-      // library (arcturial/clickatell).
-      // See https://github.com/arcturial/clickatell/issues/25
-      // We define a new '-1' error code just for our temporary usage.
-      $error_code = !empty($error_message) ? -1 : NULL;
-
-      if ($recipient) {
-        $report->setRecipient($recipient);
-      }
+      $report->setRecipient($recipient);
       if ($message_id) {
         $report->setMessageId($message_id);
       }
 
       // If $error_code is FALSE or NULL then there was an no error.
-      if (!$error_code) {
+      if (NULL !== $accepted) {
         // Success!
         $report->setStatus(SmsMessageReportStatus::QUEUED);
       }
       else {
-        if ($error_message) {
-          $report->setStatusMessage(sprintf('Error: %s', $error_message));
-        }
-
-        // @todo implement conditionals for all Clickatell error codes when
-        // the Clickatell library supports it.
-        if ($error_code == 'wontbetrue') {
-
-        }
-        else {
-          $report->setStatus(SmsMessageReportStatus::ERROR);
-        }
+        // We don't have error codes yet in this API.
+        $report
+          ->setStatus(SmsMessageReportStatus::ERROR)
+          ->setStatusMessage(sprintf('Error: %s', $error_message));
       }
 
       $reports[] = $report;
