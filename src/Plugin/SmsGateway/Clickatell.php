@@ -169,10 +169,8 @@ class Clickatell extends SmsGatewayPluginBase {
         }
       }
 
-      $reports[] = $report;
+      $result->addReport($report);
     }
-
-    $result->setReports($reports);
 
     return $result;
   }
