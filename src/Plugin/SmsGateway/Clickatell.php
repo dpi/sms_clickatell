@@ -90,7 +90,7 @@ class Clickatell extends SmsGatewayPluginBase {
         $limit = (new DrupalDateTime())
           ->add(new \DateInterval('PT30M'));
         if ($date > $limit) {
-          $extra['scheduledDeliveryTime'] = $date->format('Y-m-d\TH:i:s\Z');
+          $message['scheduledDeliveryTime'] = $date->format('Y-m-d\TH:i:s\Z');
         }
       }
     }
@@ -143,10 +143,8 @@ class Clickatell extends SmsGatewayPluginBase {
           ->setStatusMessage(sprintf('Error: %s', $error_message));
       }
 
-      $reports[] = $report;
+      $result->addReport($report);
     }
-
-    $result->setReports($reports);
 
     return $result;
   }
